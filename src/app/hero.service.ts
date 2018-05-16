@@ -38,12 +38,26 @@ export class HeroService {
         'Content-Type': 'application/json'
       })
     };
-    
+
     return this.http.put(this.heroesUrl, hero, httpOptions)
                     .pipe(
                       tap(_ => this.log(`updated hero id ${hero.id}`)),
                       catchError(this.handleError<any>('update hero'))
                     );
+  }
+
+  addHero (hero: Hero): Observable<Hero> {
+    const httpOptions = {
+      headers: new HttpHeaders({
+        'Content-Type': 'application/json'
+      })
+    };
+    
+    return this.http.post<Hero>(this.heroesUrl, hero, httpOptions)
+      .pipe(
+        tap((hero: Hero) => this.log(`added id ${hero.id}`)),
+        catchError(this.handleError<Hero>('addHero'))
+      )
   }
 
   private log(message: string) {
