@@ -10,6 +10,12 @@ import {catchError, map, tap} from 'rxjs/operators';
 export class HeroService {
   private heroesUrl = 'api/heroes';
   
+  httpOptions = {
+    headers: new HttpHeaders({
+      'Content-Type': 'application/json'
+    })
+  };
+
   constructor(
     private http: HttpClient,
     private msgService: MessageService) { }
@@ -33,13 +39,7 @@ export class HeroService {
   }
 
   updateHero (hero: Hero): Observable<any> {
-    const httpOptions = {
-      headers: new HttpHeaders({
-        'Content-Type': 'application/json'
-      })
-    };
-
-    return this.http.put(this.heroesUrl, hero, httpOptions)
+    return this.http.put(this.heroesUrl, hero, this.httpOptions)
                     .pipe(
                       tap(_ => this.log(`updated hero id ${hero.id}`)),
                       catchError(this.handleError<any>('update hero'))
@@ -47,16 +47,32 @@ export class HeroService {
   }
 
   addHero (hero: Hero): Observable<Hero> {
-    const httpOptions = {
-      headers: new HttpHeaders({
-        'Content-Type': 'application/json'
-      })
-    };
-    
-    return this.http.post<Hero>(this.heroesUrl, hero, httpOptions)
+    return this.http.post<Hero>(this.heroesUrl, hero, this.httpOptions)
       .pipe(
         tap((hero: Hero) => this.log(`added id ${hero.id}`)),
         catchError(this.handleError<Hero>('addHero'))
+      )
+  }
+
+  deleteHero (hero: Hero| number): Observable<Hero> {
+    const id = typeof hero === 'number' ? hero : hero.id;
+    const url = `${this.heroesUrl}/${id}`;
+
+    return this.http.delete<Hero>(url, this.httpOptions).pipe(
+      tap(_ => this.log(`delete hero id=${id}`)),
+      catchError(this.handleError<Hero>('deleteHero'))
+    );
+  }
+
+  searchHeroes(term: string): Observable<Hero[]> {
+    if (!term.trim()) {
+      return of([]);
+    }
+
+    return this.http.get<Hero[]>(`${this.heroesUrl}/?name=${term}`)
+      .pipe(
+        tap(_ => this.log(`found heroes matching "${term}"`)),
+        catchError(this.handleError<Hero[]>('searchHeroes', []))
       )
   }
 
